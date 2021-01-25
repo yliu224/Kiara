@@ -8,7 +8,13 @@ from time import sleep
 import sys
 from datetime import date,timedelta
 
-driver = webdriver.Chrome()
+opt = webdriver.ChromeOptions()
+opt.add_argument("--no-sandbox")
+opt.add_argument("--disable-gpu")
+opt.add_argument("--headless")
+opt.add_argument("--disable-dev-shm-usage")
+
+driver = webdriver.Chrome(options=opt)
 driver.get('https://kiaraseattle.securecafe.com/residentservices/kiara/userlogin.aspx')
 sys.stdout = StdWithTimeStamp(sys.stdout)
 booked_time = 'hh:mm XX'
@@ -88,6 +94,7 @@ fill_input('Username','dingdingvsjj@gmail.com')
 fill_input('Password','5511774aA!')
 click_button('SignIn')
 wait_until(lambda: driver.current_url == 'https://kiaraseattle.securecafe.com/residentservices/kiara/home.aspx')
+print('[INFO] Signed in')
 
 #####Go to booking page#####
 driver.find_element_by_xpath('//a[@id="Concierge_MenuLink"]').click()
@@ -107,17 +114,20 @@ try:
     booked_time = booking_time(TIME)
 except RuntimeError as e:
     print("[ERROR] {}".format(str(e)))
+    driver.quit()
     exit(0)
 
 click_button('btnCreateReservation')
 click_button('btnPayNow')
 get_alert().accept()
+print('[INFO] Booked fitness room')
 
 #####Sign Document#####
 switch_to_document_page()
 click_button('BUTTON_SIGNA01_1')
 click_button('docFooterRightButton')
 click_button('messageModalButton')
+print('[INFO] Signed all documentation')
 
 #####Check Result#####
 wait_until(lambda: driver.current_url == 'https://kiaraseattle.securecafe.com/residentservices/kiara/conciergereservations.aspx#tab_ViewReservations')
@@ -127,4 +137,5 @@ booked_date = driver.find_element_by_xpath('//table[@id="ReservationStatus"]/tbo
 status = driver.find_element_by_xpath('//table[@id="ReservationStatus"]/tbody/tr[1]/td[7]').text
 
 print('[INFO] Successfully booked {} {} {}'.format(booked_date, booked_time, status))
+driver.quit()
 print('[DONE] :-)\n')
