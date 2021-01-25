@@ -1,13 +1,17 @@
+from stout_setup import StdWithTimeStamp
 from config import AFTER_N_DAYS, NUMBER_OF_GUESTS, TIME
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 
-from time import *
+from time import sleep
+import sys
 from datetime import date,timedelta
 
 driver = webdriver.Chrome()
 driver.get('https://kiaraseattle.securecafe.com/residentservices/kiara/userlogin.aspx')
+sys.stdout = StdWithTimeStamp(sys.stdout)
+booked_time = 'hh:mm XX'
 
 def wait_until(callback,time=60):
     tick=0
@@ -19,11 +23,10 @@ def wait_until(callback,time=60):
 
 def select_value(id,value,extra_criteria=''):
     wait_until(lambda: is_displayed('//select[@id="{}"]{}'.format(id,extra_criteria)))
-    if driver.find_element_by_xpath('//select@id="{}"]'.format(id)).is_enabled():
+    if driver.find_element_by_xpath('//select[@id="{}"]/option[text() = "{}"]'.format(id,value)).is_enabled():
         driver.find_element_by_xpath('//select[@id="{}"]'.format(id)).click()
         driver.find_element_by_xpath('//select[@id="{}"]/option[text() = "{}"]'.format(id,value)).click()
     else:
-        print('[WARN] {} not availabe".format(value)'.format(value))
         raise RuntimeWarning("{} not availabe".format(value))
 
 def fill_input(id,value,extra_step=None):
@@ -67,16 +70,19 @@ def booking_time(time):
             select_value('AmPmStart',ampm)
             sleep(2)
             select_value('HoursStart',hour)
-            print('{}:00 {} {} guest ')
-            break
-        except RuntimeWarning:
+            return '{}:00 {}'.format(hour, ampm)
+        except RuntimeWarning as e:
+            print('[WARN] {} {}'.format(hour,str(e)))
+            sleep(2)
             continue
+    raise RuntimeError('Failed to book the fitness room for {}'.format(time))
     
 def switch_to_document_page():
     wait_until(lambda:is_displayed('//iframe[@id="ySignatureDocViewer"]'))
     driver.switch_to.frame(driver.find_elements_by_xpath('//iframe[@id="ySignatureDocViewer"]')[0])
 
 
+print('[START] ......')
 #####Log in#####
 fill_input('Username','dingdingvsjj@gmail.com')
 fill_input('Password','5511774aA!')
@@ -93,19 +99,32 @@ select_value('ResourceId','Fitness Center')
 select_value('OverbookReason','Fitness','[not(@disabled)]')
 fill_input('GuestCount',NUMBER_OF_GUESTS,lambda: driver.find_element_by_xpath('//input[@id="GuestCount"]').send_keys(Keys.BACK_SPACE))
 
-wait_until(lambda:is_displayed('//div[@id="page_loading"'),time=10)
+wait_until(lambda:is_displayed('//div[@id="page_loading"'),time=5)
 wait_until(lambda:not is_displayed('//div[@id="page_loading"'),time=10)
 
 select_date(AFTER_N_DAYS)
-booking_time(TIME)
-click_button('btnCreateReservation')
+try:
+    booked_time = booking_time(TIME)
+except RuntimeError as e:
+    print("[ERROR] {}".format(str(e)))
+    exit(0)
 
+click_button('btnCreateReservation')
 click_button('btnPayNow')
 get_alert().accept()
 
-#### this URL is not correct
+#####Sign Document#####
 switch_to_document_page()
 click_button('BUTTON_SIGNA01_1')
 click_button('docFooterRightButton')
 click_button('messageModalButton')
-print('DONE')
+
+#####Check Result#####
+wait_until(lambda: driver.current_url == 'https://kiaraseattle.securecafe.com/residentservices/kiara/conciergereservations.aspx#tab_ViewReservations')
+wait_until(lambda:is_displayed('//table[@id="ReservationStatus"]'))
+
+booked_date = driver.find_element_by_xpath('//table[@id="ReservationStatus"]/tbody/tr[1]/td[3]').text
+status = driver.find_element_by_xpath('//table[@id="ReservationStatus"]/tbody/tr[1]/td[7]').text
+
+print('[INFO] Successfully booked {} {} {}'.format(booked_date, booked_time, status))
+print('[DONE] :-)\n')
