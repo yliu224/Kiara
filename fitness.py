@@ -2,6 +2,8 @@ from stout_setup import StdWithTimeStamp
 from config import AFTER_N_DAYS, NUMBER_OF_GUESTS, TIME
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
 from time import sleep
@@ -78,7 +80,7 @@ def booking_time(time):
             select_value('HoursStart',hour)
             return '{}:00 {}'.format(hour, ampm)
         except RuntimeWarning as e:
-            print('[WARN] {} {}'.format(hour,str(e)))
+            print('[WARN] {}:00 --- {}'.format(hour,str(e)))
             sleep(2)
             continue
     raise RuntimeError('Failed to book the fitness room for {}'.format(time))
@@ -88,7 +90,7 @@ def switch_to_document_page():
     driver.switch_to.frame(driver.find_elements_by_xpath('//iframe[@id="ySignatureDocViewer"]')[0])
 
 
-print('[START] ......')
+print('[START] Booking fitness room with {} guest at {}. Potential pickable time {}'.format(NUMBER_OF_GUESTS,date.today()+timedelta(AFTER_N_DAYS),TIME))
 #####Log in#####
 fill_input('Username','dingdingvsjj@gmail.com')
 fill_input('Password','5511774aA!')
