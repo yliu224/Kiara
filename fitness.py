@@ -108,7 +108,7 @@ select_value('ResourceId','Fitness Center')
 select_value('OverbookReason','Fitness','[not(@disabled)]')
 fill_input('GuestCount',NUMBER_OF_GUESTS,lambda: driver.find_element_by_xpath('//input[@id="GuestCount"]').send_keys(Keys.BACK_SPACE))
 
-wait_until(lambda:is_displayed('//div[@id="page_loading"'),time=5)
+wait_until(lambda:is_displayed('//div[@id="page_loading"'),time=3)
 wait_until(lambda:not is_displayed('//div[@id="page_loading"'),time=10)
 
 select_date(AFTER_N_DAYS)
