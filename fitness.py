@@ -71,6 +71,14 @@ def select_date(days_later):
     driver.find_element_by_xpath('//div[@id="ui-datepicker-div"]//a[text()={}]'.format(ed.day)).click()
 
 def booking_time(time):
+    try:
+        select_value('AmPmStart','PM')
+    except RuntimeWarning:
+        #For some reason, the website will fail at the first time when you select 
+        #the PM selection dropdown. We will pass the first exception
+        sleep(2)
+        pass
+
     for t in time:
         ampm = t['ampm']
         hour = t['hour']
@@ -102,10 +110,10 @@ print('[INFO] Signed in')
 driver.find_element_by_xpath('//a[@id="Concierge_MenuLink"]').click()
 driver.find_element_by_xpath('//a[@id="conciergereservationsaspx_SubmenuLink"]').click()
 wait_until(lambda: driver.current_url == 'https://kiaraseattle.securecafe.com/residentservices/kiara/conciergereservations.aspx#tab_MakeAReservation')
+print('[INFO] In the booking page')
 
 #####Book Fitness center#####
 select_value('ResourceId','Fitness Center')
-select_value('OverbookReason','Fitness','[not(@disabled)]')
 fill_input('GuestCount',NUMBER_OF_GUESTS,lambda: driver.find_element_by_xpath('//input[@id="GuestCount"]').send_keys(Keys.BACK_SPACE))
 
 wait_until(lambda:is_displayed('//div[@id="page_loading"'),time=3)
@@ -122,7 +130,7 @@ except RuntimeError as e:
 click_button('btnCreateReservation')
 click_button('btnPayNow')
 get_alert().accept()
-print('[INFO] Booked fitness room')
+print('[INFO] Booked fitness room at {}'.format(booked_time))
 
 #####Sign Document#####
 switch_to_document_page()
