@@ -38,6 +38,7 @@ def select_value(id,value,extra_criteria=''):
         raise RuntimeWarning("{} not availabe".format(value))
 
 def fill_input(id,value,extra_step=None):
+    wait_until(lambda: is_displayed('//input[@id="{}"]'.format(id)))
     driver.find_element_by_xpath('//input[@id="{}"]'.format(id)).click()
     if extra_step:
         extra_step()
